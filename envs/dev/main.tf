@@ -5,16 +5,16 @@ provider "aws" {
 
 module "vpc" {
   source     = "../../modules/vpc"
-  cidr_block = var.cidr_block
-  name       = "dev-vpc"
+  name       = "${var.environment}-vpc"
+  cidr_block = var.vpc_cidr_block
 }
 
 terraform {
   backend "s3" {
-  bucket       = "platform-iac-dev-tf-state"
-  key          = "dev/terraform.tfstate"
-  region       = "us-east-1"
+    bucket = "platform-iac-dev-tf-state"
+    key    = "dev/terraform.tfstate"
+    region = "us-east-1"
 
-  use_lockfile = true
-}
+    use_lockfile = true
+  }
 }
