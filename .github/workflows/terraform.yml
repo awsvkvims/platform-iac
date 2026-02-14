@@ -26,6 +26,8 @@ jobs:
         shell: bash
         working-directory: ${{ matrix.env }}
 
+    env:
+      HAS_AWS_CREDS: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,13 +47,13 @@ jobs:
         run: terraform validate
 
       - name: Terraform plan (skipped - no AWS creds)
-        if: ${{ secrets.AWS_ACCESS_KEY_ID == '' || secrets.AWS_SECRET_ACCESS_KEY == '' }}
+        if: env.HAS_AWS_CREDS == 'false'
         run: |
           echo "Skipping terraform plan because AWS credentials are not configured in repo secrets."
           echo "fmt/validate still ran."
 
       - name: Terraform plan (with AWS creds)
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+        if: env.HAS_AWS_CREDS == 'true'
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -61,7 +63,7 @@ jobs:
           terraform show -no-color tfplan > tfplan.txt
 
       - name: Upload plan artifact
-        if: ${{ secrets.AWS_ACCESS_KEY_ID != '' && secrets.AWS_SECRET_ACCESS_KEY != '' }}
+        if: env.HAS_AWS_CREDS == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: tfplan-${{ matrix.env }}
