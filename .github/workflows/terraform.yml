@@ -1,0 +1,53 @@
+name: Terraform CI
+
+on:
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  terraform:
+    name: Terraform fmt/validate/plan (envs)
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        env:
+          - envs/dev
+          - envs/prod
+
+    defaults:
+      run:
+        shell: bash
+        working-directory: ${{ matrix.env }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.14.5
+
+      - name: Terraform fmt (check)
+        run: terraform fmt -check -recursive
+
+      - name: Terraform init
+        run: terraform init -input=false
+
+      - name: Terraform validate
+        run: terraform validate
+
+      # Plan is only safe if AWS creds exist in GitHub Actions.
+      # We'll enable this once secrets are configured.
+      - name: Terraform plan (skipped until AWS creds)
+        run: |
+          echo "Skipping terraform plan until AWS credentials are configured in repo secrets."
+          echo "To enable: set AWS creds and replace this step with terraform plan -input=false -no-color"
+
